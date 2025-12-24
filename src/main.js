@@ -63,12 +63,22 @@ function createWindow() {
   // Inject CSS for title bar zone after page loads
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.insertCSS(`
-      html {
-        padding-top: 32px !important;
+      html, body {
+        height: 100% !important;
+        overflow: hidden !important;
         background-color: rgb(26, 26, 26) !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
-      body {
-        background-color: rgb(26, 26, 26) !important;
+      body > div:first-child {
+        padding-top: 32px !important;
+        box-sizing: border-box !important;
+        height: 100% !important;
+      }
+      /* Hide any scrollbar on the outer html/body elements */
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar {
+        display: none !important;
       }
     `);
   });
