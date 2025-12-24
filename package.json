@@ -1,0 +1,48 @@
+{
+  "name": "messenger-desktop",
+  "version": "1.0.0",
+  "description": "Desktop app for Facebook Messenger",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "build:unsigned": "electron-builder --mac --config.mac.identity=null"
+  },
+  "keywords": ["messenger", "facebook", "desktop", "electron"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.local.messenger-desktop",
+    "productName": "Messenger",
+    "mac": {
+      "category": "public.app-category.social-networking",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
+        }
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Messenger needs microphone access for voice and video calls",
+        "NSCameraUsageDescription": "Messenger needs camera access for video calls"
+      }
+    },
+    "dmg": {
+      "sign": false
+    },
+    "files": [
+      "src/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  }
+}

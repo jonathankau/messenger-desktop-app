@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:webrtchacks.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:www.electronjs.org)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: initial working Messenger desktop app for macOS\n\nElectron wrapper for messenger.com with:\n- Persistent login via session partition\n- Native macOS title bar (hiddenInset)\n- Window resizing with min constraints\n- WebRTC permissions for voice/video calls\n- External links open in default browser\n- Single instance lock\n\nUnsigned builds ready for local testing.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
