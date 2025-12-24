@@ -34,7 +34,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      sandbox: false,
       webSecurity: true,
     },
   });
@@ -78,15 +78,43 @@ function createWindow() {
     mainWindow.show();
   });
 
-  // Handle external links - open in default browser
+  // Handle external links and popup windows (including call windows)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // Allow about:blank popups (used by messenger.com for calls)
+    if (url === 'about:blank') {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          webPreferences: {
+            partition: 'persist:messenger',
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false,
+          },
+        },
+      };
+    }
+
+    // Open external links in default browser
     if (!url.startsWith('https://www.messenger.com') &&
         !url.startsWith('https://www.facebook.com') &&
         !url.startsWith('https://facebook.com')) {
       shell.openExternal(url);
       return { action: 'deny' };
     }
-    return { action: 'allow' };
+
+    // Allow messenger/facebook popups with proper configuration
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        webPreferences: {
+          partition: 'persist:messenger',
+          contextIsolation: true,
+          nodeIntegration: false,
+          sandbox: false,
+        },
+      },
+    };
   });
 
   // Handle navigation to keep user on messenger.com
