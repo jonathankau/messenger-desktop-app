@@ -19,6 +19,7 @@
     "appId": "com.local.messenger-desktop",
     "productName": "Messenger",
     "mac": {
+      "icon": "build/icon.png",
       "category": "public.app-category.social-networking",
       "target": [
         {

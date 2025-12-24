@@ -26,7 +26,8 @@ function createWindow() {
     minWidth: 400,
     minHeight: 400,
     titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 16, y: 16 },
+    trafficLightPosition: { x: 16, y: 10 },
+    backgroundColor: '#1a1a1a',
     show: false, // Show when ready to prevent flash
     webPreferences: {
       partition: 'persist:messenger',
@@ -56,8 +57,21 @@ function createWindow() {
     return false;
   });
 
-  // Load messenger.com
-  mainWindow.loadURL('https://www.messenger.com');
+  // Load messenger.com login page
+  mainWindow.loadURL('https://www.messenger.com/login');
+
+  // Inject CSS for title bar zone after page loads
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.insertCSS(`
+      html {
+        padding-top: 32px !important;
+        background-color: rgb(26, 26, 26) !important;
+      }
+      body {
+        background-color: rgb(26, 26, 26) !important;
+      }
+    `);
+  });
 
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
