@@ -1,6 +1,15 @@
-// Minimal preload script for security (contextIsolation boundary)
-// No APIs exposed - messenger.com runs in isolated context
+/**
+ * Preload script - bridge between Electron main process and renderer
+ * Sets up IPC communication for keyboard shortcuts
+ */
 
+const { ipcRenderer } = require('electron');
+const { initShortcuts } = require('./shortcuts');
+
+// Initialize shortcuts when DOM is ready
 window.addEventListener('DOMContentLoaded', () => {
   console.log('Messenger Desktop loaded');
+
+  // Initialize keyboard shortcut handlers
+  initShortcuts(ipcRenderer);
 });

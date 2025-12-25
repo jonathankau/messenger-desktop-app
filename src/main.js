@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session, shell, systemPreferences } = require('electron');
+const { app, BrowserWindow, session, shell, systemPreferences, Menu } = require('electron');
 const path = require('path');
 
 // Prevent multiple instances
@@ -8,6 +8,183 @@ if (!gotTheLock) {
 }
 
 let mainWindow;
+let helpWindow;
+
+/**
+ * Send a shortcut action to the renderer process
+ */
+function sendShortcut(action, ...args) {
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('shortcut', action, ...args);
+  }
+}
+
+/**
+ * Open the keyboard shortcuts help window
+ */
+function openHelpWindow() {
+  if (helpWindow) {
+    helpWindow.focus();
+    return;
+  }
+
+  helpWindow = new BrowserWindow({
+    width: 480,
+    height: 520,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    title: 'Keyboard Shortcuts',
+    backgroundColor: '#1a1a1a',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  });
+
+  helpWindow.loadFile(path.join(__dirname, 'help.html'));
+
+  helpWindow.on('closed', () => {
+    helpWindow = null;
+  });
+}
+
+/**
+ * Create the application menu with keyboard shortcuts
+ */
+function createMenu() {
+  const isMac = process.platform === 'darwin';
+
+  const template = [
+    // App menu (macOS only)
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    }] : []),
+
+    // Edit menu
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' },
+      ],
+    },
+
+    // View menu
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+      ],
+    },
+
+    // Navigate menu (custom shortcuts)
+    {
+      label: 'Navigate',
+      submenu: [
+        {
+          label: 'Search',
+          accelerator: 'CmdOrCtrl+F',
+          click: () => sendShortcut('focus-search'),
+        },
+        {
+          label: 'Search (Alt)',
+          accelerator: 'CmdOrCtrl+K',
+          click: () => sendShortcut('focus-search'),
+        },
+        { type: 'separator' },
+        {
+          label: 'Previous Conversation',
+          accelerator: 'CmdOrCtrl+[',
+          click: () => sendShortcut('previous-conversation'),
+        },
+        {
+          label: 'Next Conversation',
+          accelerator: 'CmdOrCtrl+]',
+          click: () => sendShortcut('next-conversation'),
+        },
+        { type: 'separator' },
+        // Conversation 1-9 shortcuts
+        ...Array.from({ length: 9 }, (_, i) => ({
+          label: `Conversation ${i + 1}`,
+          accelerator: `CmdOrCtrl+${i + 1}`,
+          click: () => sendShortcut('switch-conversation', i + 1),
+        })),
+      ],
+    },
+
+    // Message menu
+    {
+      label: 'Message',
+      submenu: [
+        {
+          label: 'Focus Message Input',
+          accelerator: 'CmdOrCtrl+I',
+          click: () => sendShortcut('focus-message-input'),
+        },
+        {
+          label: 'Return to Input',
+          accelerator: 'Escape',
+          click: () => sendShortcut('escape'),
+        },
+      ],
+    },
+
+    // Window menu
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'zoom' },
+        ...(isMac ? [
+          { type: 'separator' },
+          { role: 'front' },
+        ] : [
+          { role: 'close' },
+        ]),
+      ],
+    },
+
+    // Help menu
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Keyboard Shortcuts',
+          accelerator: 'CmdOrCtrl+/',
+          click: () => openHelpWindow(),
+        },
+      ],
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
 
 function createWindow() {
   // Get persistent session
@@ -161,6 +338,7 @@ async function requestMediaPermissions() {
 
 app.whenReady().then(async () => {
   await requestMediaPermissions();
+  createMenu();
   createWindow();
 });
 
