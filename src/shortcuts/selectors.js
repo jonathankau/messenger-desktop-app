@@ -85,12 +85,14 @@ const finder = new ResilientElementFinder();
  */
 const selectors = {
   searchInput: [
-    // ARIA-based (most reliable)
-    () => document.querySelector('[aria-label*="Search" i]'),
-    () => document.querySelector('input[placeholder*="Search" i]'),
+    // Messenger-specific search (facebook.com/messages)
+    () => document.querySelector('[aria-label="Search Messenger" i]'),
+    // ARIA-based (most reliable) — skip elements inside the hidden banner
+    () => Array.from(document.querySelectorAll('[aria-label*="Search" i]')).find(el => !el.closest('[role="banner"]')),
+    () => Array.from(document.querySelectorAll('input[placeholder*="Search" i]')).find(el => !el.closest('[role="banner"]')),
     () => document.querySelector('[role="search"] input'),
-    // Fallback: any search-like input
-    () => document.querySelector('input[type="search"]'),
+    // Fallback: any visible search-like input
+    () => Array.from(document.querySelectorAll('input[type="search"]')).find(el => !el.closest('[role="banner"]')),
   ],
 
   messageInput: [

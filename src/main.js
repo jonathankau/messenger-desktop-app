@@ -228,14 +228,16 @@ function createWindow() {
   // Handle permission checks
   ses.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
     if (requestingOrigin.startsWith('https://www.messenger.com') ||
-        requestingOrigin.startsWith('https://messenger.com')) {
+        requestingOrigin.startsWith('https://messenger.com') ||
+        requestingOrigin.startsWith('https://www.facebook.com') ||
+        requestingOrigin.startsWith('https://facebook.com')) {
       return true;
     }
     return false;
   });
 
-  // Load messenger.com login page
-  mainWindow.loadURL('https://www.messenger.com/login');
+  // Load Facebook Messages
+  mainWindow.loadURL('https://www.facebook.com/messages');
 
   // Inject CSS for title bar zone after page loads
   mainWindow.webContents.on('did-finish-load', () => {
@@ -252,17 +254,71 @@ function createWindow() {
         box-sizing: border-box !important;
         height: 100% !important;
       }
+      /* Hide the Facebook top navigation banner */
+      [role="banner"] {
+        display: none !important;
+      }
       /* Hide any scrollbar on the outer html/body elements */
       html::-webkit-scrollbar,
       body::-webkit-scrollbar {
         display: none !important;
       }
     `);
+
+    // Hide the Facebook nav bar via JS as a fallback for SPA re-renders
+    mainWindow.webContents.executeJavaScript(`
+      (function hideBanner() {
+        const banner = document.querySelector('[role="banner"]');
+        if (banner) banner.style.setProperty('display', 'none', 'important');
+
+        new MutationObserver(() => {
+          const b = document.querySelector('[role="banner"]');
+          if (b && b.style.display !== 'none') {
+            b.style.setProperty('display', 'none', 'important');
+          }
+        }).observe(document.body, { childList: true, subtree: true });
+      })();
+    `);
   });
 
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+  });
+
+  // Right-click context menu
+  mainWindow.webContents.on('context-menu', (event, params) => {
+    const menuTemplate = [];
+
+    if (params.isEditable) {
+      if (params.editFlags.canUndo) menuTemplate.push({ role: 'undo' });
+      if (params.editFlags.canRedo) menuTemplate.push({ role: 'redo' });
+      if (menuTemplate.length > 0) menuTemplate.push({ type: 'separator' });
+      if (params.editFlags.canCut) menuTemplate.push({ role: 'cut' });
+      if (params.editFlags.canCopy) menuTemplate.push({ role: 'copy' });
+      if (params.editFlags.canPaste) menuTemplate.push({ role: 'paste' });
+      if (params.editFlags.canSelectAll) {
+        menuTemplate.push({ type: 'separator' });
+        menuTemplate.push({ role: 'selectAll' });
+      }
+    } else if (params.selectionText) {
+      menuTemplate.push({ role: 'copy' });
+    }
+
+    if (params.linkURL) {
+      if (menuTemplate.length > 0) menuTemplate.push({ type: 'separator' });
+      menuTemplate.push({
+        label: 'Copy Link',
+        click: () => {
+          const { clipboard } = require('electron');
+          clipboard.writeText(params.linkURL);
+        },
+      });
+    }
+
+    if (menuTemplate.length > 0) {
+      Menu.buildFromTemplate(menuTemplate).popup();
+    }
   });
 
   // Handle external links and popup windows (including call windows)
